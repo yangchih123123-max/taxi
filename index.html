@@ -1,154 +1,303 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111827">
-<title>里程計費</title>
-<style>
-:root{color-scheme:light;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--blue:#2563eb;--green:#15803d;--red:#b91c1c}
-*{box-sizing:border-box}
-body{margin:0;background:#f3f4f6;color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif}
-main{max-width:480px;margin:auto;padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
-.top{display:flex;justify-content:flex-end;align-items:center;margin:2px 2px 14px;min-height:28px}
-.status{font-size:.82rem;color:var(--muted);background:#e5e7eb;border-radius:99px;padding:6px 10px}
-.status.active{color:#166534;background:#dcfce7}
-.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:12px}
-.amountbox{text-align:center;padding:14px 0 18px}
-.amount{font-size:clamp(3.6rem,16vw,5rem);line-height:1.08;font-weight:800;letter-spacing:-2px;margin:8px 0}
-.caption{font-size:.9rem;color:var(--muted)}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:#f9fafb;border-radius:13px;padding:13px}
-.stat .v{font-size:1.35rem;font-weight:750;margin-top:5px;overflow-wrap:anywhere}
-.label{font-size:.83rem;color:var(--muted)}
-.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{border:0;border-radius:13px;padding:15px 8px;font:inherit;font-weight:750;min-height:52px}
-button:disabled{opacity:.45}
-.start{background:var(--blue);color:white}
-.stop{background:var(--red);color:white}
-.reset{background:#e5e7eb;color:#111827;width:100%;margin-top:10px}
-.message{font-size:.9rem;line-height:1.55;color:var(--muted);margin:12px 2px 0;overflow-wrap:anywhere}
-.details{font-size:.84rem;color:var(--muted);line-height:1.6;overflow-wrap:anywhere}
-.details div{margin-top:5px}
-.export{background:#e5e7eb;color:#111827;width:100%;margin-top:12px}
-.smallnote{font-size:.78rem;color:#9ca3af;line-height:1.5;margin:14px 3px 0}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GPS 車資計算</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background: #111;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #aaa;
+    }
+    .card {
+      background: #1c1c1e;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .label {
+      font-size: 0.95rem;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .value {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 22px;
+    }
+    .value.fare {
+      color: #30d158;
+      font-size: 3.2rem;
+    }
+    .value.km {
+      color: #0a84ff;
+    }
+    .status {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 28px;
+      min-height: 1.2em;
+    }
+    .status.active {
+      color: #30d158;
+    }
+    .status.error {
+      color: #ff453a;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      font-size: 1.35rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn-start {
+      background: #30d158;
+      color: #000;
+    }
+    .btn-stop {
+      background: #ff453a;
+      color: #fff;
+    }
+    .btn-reset {
+      background: #2c2c2e;
+      color: #fff;
+      margin-top: 12px;
+    }
+  </style>
 </head>
 <body>
-<main>
-  <div class="top"><span id="status" class="status">尚未開始</span></div>
+  <h1>GPS 車資計算</h1>
 
-  <section class="card">
-    <div class="amountbox">
-      <div class="caption">應收金額</div>
-      <div id="fare" class="amount">$100</div>
-      <div id="fareSub" class="caption">目前里程 0.00 公里</div>
-    </div>
-    <div class="stats">
-      <div class="stat"><div class="label">行駛公里</div><div id="distance" class="v">0.00 km</div></div>
-      <div class="stat"><div class="label">行程時間</div><div id="duration" class="v">00:00:00</div></div>
-    </div>
-  </section>
+  <div class="card">
+    <div class="label">目前距離</div>
+    <div class="value km" id="distance">0.00 <span style="font-size:1.2rem">km</span></div>
 
-  <section class="card">
-    <div class="buttons">
-      <button id="start" class="start">開始</button>
-      <button id="stop" class="stop" disabled>結束</button>
-    </div>
-    <button id="reset" class="reset">重新計算</button>
-    <p id="message" class="message" role="status" aria-live="polite">按「開始」後允許定位。請在行程中保持此頁開啟。</p>
-  </section>
+    <div class="label">預估車資</div>
+    <div class="value fare" id="fare">100 <span style="font-size:1.3rem">元</span></div>
 
-  <section class="card">
-    <div class="details">
-      <div>上車時間：<span id="startTime">—</span></div>
-      <div>下車時間：<span id="endTime">—</span></div>
-      <div>上車位置：<span id="startCoord">—</span></div>
-      <div>下車位置：<span id="endCoord">—</span></div>
-    </div>
-    <button id="export" class="export" disabled>匯出紀錄</button>
-  </section>
-  <p class="smallnote">GPS 估算可能受隧道、高樓及訊號影響。此工具僅供里程估算，並非經檢定的正式計費表。</p>
-</main>
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  let watchId=null, active=false, finished=false, timer=null;
-  let startAt=null,endAt=null,startPos=null,endPos=null,lastPos=null;
-  let totalMeters=0,lastAccuracy=null,pointCount=0,rows=[];
-  const fmtTime=t=>t?new Date(t).toLocaleString():"—";
-  const coord=p=>p?`${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`:"—";
-  const km=()=>totalMeters/1000;
-  const fare=d=>d<=3?100:100+Math.ceil(((d-3)*25)/10)*10;
-  const dur=s=>{s=Math.max(0,Math.floor(s||0));return [Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,"0")).join(":")};
-  function distance(a,b){
-    const r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dn=r(b.lon-a.lon),p=r(a.lat),q=r(b.lat);
-    const h=Math.sin(dl/2)**2+Math.cos(p)*Math.cos(q)*Math.sin(dn/2)**2;
-    return 6371000*2*Math.asin(Math.min(1,Math.sqrt(h)));
-  }
-  function render(){
-    $("distance").textContent=km().toFixed(2)+" km";
-    $("fare").textContent="$"+fare(km());
-    $("fareSub").textContent="目前里程 "+km().toFixed(2)+" 公里";
-    $("duration").textContent=startAt?dur(((endAt||Date.now())-startAt)/1000):"00:00:00";
-    $("startTime").textContent=fmtTime(startAt);$("endTime").textContent=fmtTime(endAt);
-    $("startCoord").textContent=coord(startPos);$("endCoord").textContent=coord(endPos);
-    $("start").disabled=active||finished;$("stop").disabled=!active;$("export").disabled=!finished;
-    $("status").textContent=active?"記錄中":finished?"已結束":"尚未開始";
-    $("status").className="status"+(active?" active":"");
-  }
-  function msg(t,bad=false){$("message").textContent=t;$("message").style.color=bad?"#b91c1c":"#6b7280"}
-  function position(pos){
-    const c=pos.coords,p={lat:c.latitude,lon:c.longitude,accuracy:c.accuracy,time:pos.timestamp||Date.now()};
-    lastAccuracy=p.accuracy;
-    if(!active)return;
-    if(!Number.isFinite(p.accuracy)||p.accuracy>40){msg("定位訊號較弱，請移到戶外或較開闊處。",true);return}
-    if(!lastPos){lastPos=p;startPos=startPos||p;pointCount++;msg("定位成功，正在記錄里程。");render();return}
-    const dt=Math.max(.2,(p.time-lastPos.time)/1000),meters=distance(lastPos,p),speed=meters/dt;
-    if(speed>45||meters>500){msg("定位有跳點，已略過；請保持 GPS 訊號穩定。",true);return}
-    // Use a modest noise threshold; GPS-only mileage is an estimate, not survey-grade measurement.
-    const threshold=Math.max(2.5,Math.min(6,(p.accuracy+lastPos.accuracy)*0.1));
-    if(meters>=threshold){totalMeters+=meters;pointCount++;rows.push({time:new Date(p.time).toISOString(),lat:p.lat,lon:p.lon,accuracy:p.accuracy});}
-    lastPos=p;msg("定位正常，正在記錄里程。");render();
-  }
-  function error(e){
-    let t="無法取得定位。請確認手機已開啟定位服務。";
-    if(e.code===1)t="定位權限未開啟。請在瀏覽器網站設定中允許位置權限。";
-    if(e.code===2)t="目前沒有可用定位訊號，請到戶外或較開闊處再試。";
-    if(e.code===3)t="定位逾時，請確認 GPS 已開啟，再按重新計算後重試。";
-    msg(t,true);
-  }
-  function begin(){
-    if(!navigator.geolocation){msg("這個瀏覽器不支援定位，請使用 Android Chrome。",true);return}
-    if(!window.isSecureContext&&location.hostname!=="localhost"){
-      msg("瀏覽器不允許此頁取得 GPS。請使用 HTTPS 網址開啟（例如 GitHub Pages），不要直接從下載資料夾開啟。",true);return;
+    <div class="status" id="status">準備就緒</div>
+
+    <button class="btn btn-start" id="mainBtn" onclick="toggleTracking()">開始計費</button>
+    <button class="btn btn-reset" id="resetBtn" onclick="resetAll()" style="display:none;">重新計算</button>
+  </div>
+
+  <script>
+    // ========== 計費規則 ==========
+    // 3km 以內：100 元
+    // 3~8km：線性從 100 → 200（每公里 +20）
+    // 8km 後：每公里輪流 +30、+20，無條件進位
+    function calcFare(km) {
+      if (km <= 3) return 100;
+
+      // 3 ~ 8 km：從 100 線性增加到 200
+      if (km <= 8) {
+        // 每公里 +20，無條件進位
+        const extraKm = km - 3;
+        return 100 + Math.ceil(extraKm * 20);
+      }
+
+      // 超過 8 km
+      // 先固定到 8km = 200 元
+      let fare = 200;
+      let remaining = km - 8;
+
+      // 從第 9 公里開始，奇數公里 +30，偶數公里 +20
+      // 第1個額外公里 (8~9)：+30
+      // 第2個 (9~10)：+20
+      // 第3個 (10~11)：+30 ...
+      let fullKm = Math.floor(remaining);
+      let fraction = remaining - fullKm;
+
+      for (let i = 1; i <= fullKm; i++) {
+        if (i % 2 === 1) {
+          fare += 30; // 奇數：+30
+        } else {
+          fare += 20; // 偶數：+20
+        }
+      }
+
+      // 不足1公里的部分，無條件進位（依下一檔費率）
+      if (fraction > 0) {
+        const nextIsOdd = (fullKm + 1) % 2 === 1;
+        fare += nextIsOdd ? 30 : 20;
+      }
+
+      return fare;
     }
-    active=true;finished=false;startAt=Date.now();endAt=null;startPos=null;endPos=null;lastPos=null;totalMeters=0;pointCount=0;rows=[];
-    msg("正在取得 GPS，請允許位置權限並保持頁面開啟。");
-    watchId=navigator.geolocation.watchPosition(position,error,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
-    timer=setInterval(render,1000);render();
-  }
-  function end(){
-    if(!active)return;
-    active=false;finished=true;endAt=Date.now();if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;
-    if(timer)clearInterval(timer);timer=null;endPos=lastPos;
-    msg("行程已結束。");render();
-  }
-  function reset(){
-    if(active&&watchId!==null)navigator.geolocation.clearWatch(watchId);
-    if(timer)clearInterval(timer);
-    watchId=null;timer=null;active=false;finished=false;startAt=null;endAt=null;startPos=null;endPos=null;lastPos=null;totalMeters=0;lastAccuracy=null;pointCount=0;rows=[];
-    msg("已清除。按「開始」記錄下一趟行程。");render();
-  }
-  function exportCsv(){
-    const data=[["項目","內容"],["上車時間",fmtTime(startAt)],["下車時間",fmtTime(endAt)],["上車座標",coord(startPos)],["下車座標",coord(endPos)],["累計公里",km().toFixed(3)],["預估金額",fare(km())],["GPS點數",pointCount]];
-    const csv="\ufeff"+data.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(",")).join("\r\n");
-    const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="里程紀錄.csv";a.click();URL.revokeObjectURL(url);
-  }
-  $("start").addEventListener("click",begin);$("stop").addEventListener("click",end);
-  $("reset").addEventListener("click",()=>{if((active||finished)&&!confirm("確定清除本次行程？"))return;reset()});
-  $("export").addEventListener("click",exportCsv);render();
-})();
-</script>
+
+    // ========== 狀態 ==========
+    let watching = false;
+    let watchId = null;
+    let totalDistance = 0;      // 公尺
+    let lastLat = null;
+    let lastLon = null;
+    let lastTime = null;
+
+    // ========== 工具函式 ==========
+    function toRad(deg) {
+      return deg * Math.PI / 180;
+    }
+
+    // Haversine 計算兩點距離（公尺）
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // 地球半徑（公尺）
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function updateUI() {
+      const km = totalDistance / 1000;
+      document.getElementById('distance').innerHTML =
+        km.toFixed(2) + ' <span style="font-size:1.2rem">km</span>';
+      document.getElementById('fare').innerHTML =
+        calcFare(km) + ' <span style="font-size:1.3rem">元</span>';
+    }
+
+    function setStatus(text, type = '') {
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + type;
+    }
+
+    // ========== GPS 追蹤 ==========
+    function onPosition(pos) {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy; // 公尺
+
+      // 精度太差就忽略（超過 50 公尺）
+      if (accuracy > 50) {
+        setStatus('GPS 精度不足 (' + Math.round(accuracy) + 'm)，等待中...', 'error');
+        return;
+      }
+
+      if (lastLat !== null && lastLon !== null) {
+        const dist = getDistance(lastLat, lastLon, lat, lon);
+
+        // 過濾太小的移動（雜訊），至少移動 5 公尺才累加
+        if (dist >= 5) {
+          totalDistance += dist;
+          updateUI();
+        }
+      }
+
+      lastLat = lat;
+      lastLon = lon;
+      lastTime = Date.now();
+
+      setStatus('追蹤中… 精度 ' + Math.round(accuracy) + 'm', 'active');
+    }
+
+    function onError(err) {
+      let msg = 'GPS 錯誤';
+      if (err.code === 1) msg = '請允許位置權限';
+      else if (err.code === 2) msg = '無法取得位置';
+      else if (err.code === 3) msg = '定位逾時';
+      setStatus(msg, 'error');
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        setStatus('此裝置不支援 GPS', 'error');
+        return;
+      }
+
+      totalDistance = 0;
+      lastLat = null;
+      lastLon = null;
+      updateUI();
+
+      watchId = navigator.geolocation.watchPosition(
+        onPosition,
+        onError,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 15000
+        }
+      );
+
+      watching = true;
+      document.getElementById('mainBtn').textContent = '停止計費';
+      document.getElementById('mainBtn').className = 'btn btn-stop';
+      document.getElementById('resetBtn').style.display = 'none';
+      setStatus('正在定位…', 'active');
+    }
+
+    function stopTracking() {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      watching = false;
+      document.getElementById('mainBtn').textContent = '開始計費';
+      document.getElementById('mainBtn').className = 'btn btn-start';
+      document.getElementById('resetBtn').style.display = 'block';
+      setStatus('已停止');
+    }
+
+    function toggleTracking() {
+      if (watching) {
+        stopTracking();
+      } else {
+        startTracking();
+      }
+    }
+
+    function resetAll() {
+      totalDistance = 0;
+      lastLat = null;
+      lastLon = null;
+      updateUI();
+      document.getElementById('resetBtn').style.display = 'none';
+      setStatus('準備就緒');
+    }
+
+    // 防止螢幕休眠（部分瀏覽器支援）
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) {}
+    }
+  </script>
 </body>
 </html>
